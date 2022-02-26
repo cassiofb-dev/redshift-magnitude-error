@@ -85,9 +85,9 @@ for folder in FOLDERS:
 
 TEDDY_DATASETS_URL = [
   'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_A.cat',
-  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_B.cat',
-  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_C.cat',
-  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_D.cat',
+  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_B.cat',
+  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_C.cat',
+  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_D.cat',
 ]
 
 HAPPY_DATASETS_URL = [
@@ -108,18 +108,18 @@ DATASETS = [
     'header': 'infer',
     'index_col': False,
   },
-  {
-    'name': 'happy',
-    'urls': HAPPY_DATASETS_URL,
-    'header': 'infer',
-    'index_col': False,
-  },
-  {
-    'name': 'sdss',
-    'urls': SDSS_DATASETS_URL,
-    'header': 0,
-    'index_col': False,
-  },
+  # {
+  #   'name': 'happy',
+  #   'urls': HAPPY_DATASETS_URL,
+  #   'header': 'infer',
+  #   'index_col': False,
+  # },
+  # {
+  #   'name': 'sdss',
+  #   'urls': SDSS_DATASETS_URL,
+  #   'header': 0,
+  #   'index_col': False,
+  # },
 ]
 
 """## Modelos"""
@@ -355,6 +355,16 @@ def log(info):
     print(info)
     log_file.write(f"{info}\n")
 
+RESULTS_DATASET_PATH = f"{CREATED_DATASETS_FOLDER}/results.csv"
+def write_result_dataset(row):
+    if os.path.isfile(RESULTS_DATASET_PATH):
+      with open(RESULTS_DATASET_PATH, 'a') as results_dataset_file:
+        results_dataset_file.write(f"{row}\n")
+    else:
+      with open(RESULTS_DATASET_PATH, 'a') as results_dataset_file:
+        results_dataset_file.write("dataset,model,strategy,mse\n")
+        results_dataset_file.write(f"{row}\n")
+
 """## Modelos"""
 
 def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
@@ -376,7 +386,8 @@ def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
     'many_feature_many_target',
   )
 
-  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> *_err): {mse:.9f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> *_err): {mse:.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_many_target,{mse:.15f}")
 
 def many_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
   mses = []
@@ -398,8 +409,9 @@ def many_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
       f"many_feature_one_target_{target_column}",
     )
 
-    log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> {target_column}): {mse:.9f}")
-  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> ?_err): {mean(mses):.9f}")
+    log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> {target_column}): {mse:.15f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> ?_err): {mean(mses):.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_one_target_,{mean(mses):.15f}")
 
 def one_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
   mses = []
@@ -424,8 +436,9 @@ def one_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
       f"one_feature_one_target_{feature_column}_{target_column}",
     )
 
-    log(f"MSE ({dataset['name']}) ({model['name']}) ({feature_column} --> {target_column}): {mse:.9f}")
-  log(f"MSE ({dataset['name']}) ({model['name']}) (?_mag --> ?_err): {mean(mses):.9f}")
+    log(f"MSE ({dataset['name']}) ({model['name']}) ({feature_column} --> {target_column}): {mse:.15f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (?_mag --> ?_err): {mean(mses):.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},one_feature_one_target,{mean(mses):.15f}")
 
 """# Experimentos"""
 
