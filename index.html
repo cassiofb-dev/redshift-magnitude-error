@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redshift: Magnitude-Error Correlation</title>
+</head>
+
+<body>
+  <style>
+    :root {
+      --main-color: #ccc;
+      --text-color: #333;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--main-color);
+      color: var(--text-color);
+      font-size: 20px;
+      text-align: center;
+      margin: 0;
+      padding: 0 2% 0 2%;
+      transition: all 1s;
+    }
+
+    .page {
+      width: 90vmin;
+      margin: auto;
+      padding: 0 2.5% 0 2.5%;
+    }
+
+    header {
+      width: 90vmin;
+      position: fixed;
+      top: 0;
+      background: var(--main-color);
+      transition: background 1s;
+    }
+
+    .navbar {
+      height: 7vh;
+      line-height: 7vh;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--text-color);
+    }
+
+    #theme {
+      cursor: pointer;
+    }
+
+    .nav-list {
+      padding: 0;
+      margin: 0;
+      min-width: 70%;
+      list-style: none;
+    }
+
+    .nav-link:hover {
+      border-bottom: 4px solid var(--text-color);
+    }
+
+    .nav-link a {
+      text-decoration: none;
+    }
+
+    section {
+      padding: 7vh 0 7vh 0;
+      border-bottom: 1px solid var(--text-color);
+    }
+
+    a {
+      color: var(--text-color);
+      transition: all 0.5s;
+    }
+
+    a:hover {
+      color: #888;
+      transition: color .7s;
+    }
+
+    p {
+      text-align: justify;
+    }
+
+    h1 {
+      font-size: 50px;
+      cursor: default;
+    }
+
+    h2 {
+      margin-bottom: 10vh;
+    }
+
+    .title {
+      text-shadow: 3px 3px 3px var(--text-color);
+      transition: color 0.5s;
+    }
+
+    .title:hover {
+      color: var(--main-color)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 32px;
+      margin: auto;
+    }
+
+    .flex {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    ul,
+    li {
+      text-align: start;
+    }
+
+    footer {
+      margin: 32px 0 32px 0;
+    }
+  </style>
+  <div class="page">
+    <header>
+      <nav class="navbar">
+        <div id="theme" class="nav-link">Dark</div>
+        <ul class="nav-list flex">
+          <li class="nav-link"><a href="#home">Top</a></li>
+          <li class="nav-link"><a href="#about">About</a></li>
+          <li class="nav-link"><a href="#profiles">Profiles</a></li>
+          <li class="nav-link"><a href="#graphs">Graphs</a></li>
+        </ul>
+      </nav>
+    </header>
+    <section id="home">
+      <h1>
+        Redshift
+      </h1>
+      <h2>Magnitude-Error Correlation</h2>
+    </section>
+    <section id="about">
+      <h2>About</h2>
+      <p>
+        Within redshift observation based on UGRIZ, is observed a pattern between the UGRIZ bands and their each
+        measurement erros. This webpage complements
+        <a href="https://github.com/cassiofb-dev/redshift-magnitude-error" target="_blank" rel="noopener noreferrer">the
+          python script</a> made to analyse this correlation. Bellow there are links to resources like reports, profiles
+        and graphs.
+      </p>
+    </section>
+    <section id="profiles">
+      <h2>Dataset Profiles</h2>
+      <p>
+        Profiles generated with
+        <a href="https://github.com/ydataai/pandas-profiling" target="_blank" rel="noopener noreferrer">
+          pandas-profiling</a> after pre-processing.
+      </p>
+      <ul>
+        <li>
+          <a href="pages/happy.analysis.html" target="_blank" rel="noopener noreferrer">
+            Happy Dataset Profile
+          </a>
+        </li>
+        <li>
+          <a href="pages/sdss.analysis.html" target="_blank" rel="noopener noreferrer">
+            SDSS Profile
+          </a>
+        </li>
+        <li>
+          <a href="pages/teddy.analysis.html" target="_blank" rel="noopener noreferrer">
+            Teddy Profile
+          </a>
+        </li>
+      </ul>
+    </section>
+    <section id="graphs">
+      <h2>Graphs</h2>
+      <p>In progress...</p>
+    </section>
+    <section id="contact">
+      <h2>Contact</h2>
+      <div class="flex">
+        <a href="https://github.com/cassiofb-dev" target="_blank" rel="noopener noreferrer">Github</a>
+        <a href="https://twitter.com/cassiofb_dev" target="_blank" rel="noopener noreferrer">Twitter</a>
+        <a href="mailto:cassiofb.souza@gmail.com" target="_blank" rel="noopener noreferrer">Email</a>
+      </div>
+    </section>
+    <footer>
+      &copy; 2022, Cássio Fernando
+    </footer>
+  </div>
+  <script>
+    const savedConfig = window.localStorage.getItem('config');
+    const config = savedConfig ? JSON.parse(savedConfig) : {
+      color: ['#ccc', '#333'],
+      name: ['Dark', 'Light'],
+    };
+
+    theme.innerText = config.name[0];
+    document.documentElement.style.setProperty('--main-color', config.color[0]);
+    document.documentElement.style.setProperty('--text-color', config.color[1]);
+
+    theme.onclick = () => {
+      config.name.reverse();
+      config.color.reverse();
+      theme.innerText = config.name[0];
+      document.documentElement.style.setProperty('--main-color', config.color[0]);
+      document.documentElement.style.setProperty('--text-color', config.color[1]);
+      window.localStorage.setItem('config', JSON.stringify(config));
+    }
+  </script>
+</body>
+
+</html>
