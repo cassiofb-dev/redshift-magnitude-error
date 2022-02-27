@@ -87,6 +87,7 @@ for folder in FOLDERS:
 
 ## Bancos de Dados
 """
+OUTLIER_ZSCORE_THRESHOLD = 3
 
 TEDDY_DATASETS_URL = [
   'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_A.cat',
@@ -270,18 +271,34 @@ def load_dataset_urls(dataset):
     ) for (index, dataset_url) in enumerate(dataset['urls'])
   ])
 
-  no_data_error_df = full_df.drop_duplicates()
-  no_data_error_df = no_data_error_df[[*X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS]]
-  no_data_error_df.reset_index(drop=True, inplace=True)
+  full_df.reset_index(drop=True, inplace=True)
+  full_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.raw.csv")
 
-  no_data_error_df[(np.abs(stats.zscore(no_data_error_df)) < 3).all(axis=1)]
-
-  no_data_error_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.csv")
-
-  profile_name = f"{dataset['name']}.analysis".lower()
-  profile = ProfileReport(no_data_error_df, title=profile_name, explorative=True)
+  profile_name = f"{dataset['name']}.raw.analysis".lower()
+  profile = ProfileReport(full_df, title=profile_name, explorative=True)
   profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
-  return no_data_error_df
+
+  no_duplicate_df = full_df.drop_duplicates()
+
+  no_duplicate_df = no_duplicate_df[[*X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS]]
+
+  outlier_mask = (np.abs(stats.zscore(no_duplicate_df)) < OUTLIER_ZSCORE_THRESHOLD).all(axis=1)
+
+  no_outlier_df = no_duplicate_df[outlier_mask]
+  outlier_df = no_duplicate_df[~outlier_mask]
+
+  outlier_df.reset_index(drop=True, inplace=True)
+  outlier_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.outlier.csv")
+
+  processed_df = no_outlier_df.transform('log2')
+
+  processed_df.reset_index(drop=True, inplace=True)
+  processed_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.processed.csv")
+
+  profile_name = f"{dataset['name']}.processed.analysis".lower()
+  profile = ProfileReport(processed_df, title=profile_name, explorative=True)
+  profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
+  return no_outlier_df
 
 def split_feature_target(dataset_df):
   X = dataset_df[X_FEATURE_COLUMNS]
@@ -324,7 +341,7 @@ BASE_HTML = """
 </head>
 <body>
   <style>
-    .dataTables_wrapper { 
+    .dataTables_wrapper {
       padding: 4px;
       border: 1px solid black;
     }
@@ -375,7 +392,7 @@ def write_result_dataset(row):
 
 def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
   grid_search_cv_name =  'multi_output_grid_search_cv'
-  
+
   if model['support_multiple_output']:
     grid_search_cv_name = 'grid_search_cv'
 
