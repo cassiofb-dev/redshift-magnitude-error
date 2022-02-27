@@ -22,6 +22,8 @@ def install(package):
   )
 
 PACKAGES = [
+  'numpy',
+  'scipy',
   'pandas',
   'xgboost',
   'scikit-learn',
@@ -36,12 +38,15 @@ for package in PACKAGES:
 import os, warnings
 warnings.filterwarnings('ignore')
 
+import numpy as np
 import pandas as pd
 
 from urllib import request
 from statistics import mean
 
 from time import perf_counter
+
+from scipy import stats
 
 from sklearn.metrics import mean_squared_error
 
@@ -266,9 +271,9 @@ def load_dataset_urls(dataset):
   ])
 
   no_data_error_df = full_df.drop_duplicates()
+  no_data_error_df = no_data_error_df[[*X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS]]
 
-  for column in X_FEATURE_COLUMNS:
-    no_data_error_df = no_data_error_df[no_data_error_df[column] != -9999]
+  no_data_error_df[(np.abs(stats.zscore(no_data_error_df)) < 3).all(axis=1)]
 
   no_data_error_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.csv")
 
