@@ -22,6 +22,8 @@ def install(package):
   )
 
 PACKAGES = [
+  'numpy',
+  'scipy',
   'pandas',
   'xgboost',
   'scikit-learn',
@@ -36,12 +38,15 @@ for package in PACKAGES:
 import os, warnings
 warnings.filterwarnings('ignore')
 
+import numpy as np
 import pandas as pd
 
 from urllib import request
 from statistics import mean
 
 from time import perf_counter
+
+from scipy import stats
 
 from sklearn.metrics import mean_squared_error
 
@@ -60,15 +65,15 @@ from xgboost import XGBRegressor
 
 from pandas_profiling import ProfileReport
 
-"""## Estrutura de Pastas"""
+"""# Estrutura de Pastas"""
 
-CREATED_DATASETS_FOLDER = 'created_datasets'
+DOWNLOADS_FOLDER = 'downloads'
 DATASETS_FOLDER = 'datasets'
 PROFILES_FOLDER = 'profiles'
 RESULTS_FOLDER = 'results'
 
 FOLDERS = [
-  CREATED_DATASETS_FOLDER,
+  DOWNLOADS_FOLDER,
   DATASETS_FOLDER,
   PROFILES_FOLDER,
   RESULTS_FOLDER,
@@ -82,6 +87,8 @@ for folder in FOLDERS:
 
 ## Bancos de Dados
 """
+
+OUTLIER_ZSCORE_THRESHOLD = 3
 
 TEDDY_DATASETS_URL = [
   'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_A.cat',
@@ -238,13 +245,13 @@ MODELS = [
 """
 
 def load_dataset(dataset_url, dataset_name, header, index_col):
-  dataset_path = f"{DATASETS_FOLDER}/{dataset_name}.csv"
+  dataset_download_path = f"{DOWNLOADS_FOLDER}/{dataset_name}.csv"
 
-  if os.path.isfile(dataset_path) == False:
-    request.urlretrieve(dataset_url, dataset_path)
+  if os.path.isfile(dataset_download_path) == False:
+    request.urlretrieve(dataset_url, dataset_download_path)
 
   dataset_df = pd.read_csv(
-      dataset_path,
+      dataset_download_path,
       comment = '#',
       names   = ['ID', *X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS],
       sep     = '\s+|,',
@@ -265,17 +272,35 @@ def load_dataset_urls(dataset):
     ) for (index, dataset_url) in enumerate(dataset['urls'])
   ])
 
-  no_data_error_df = full_df.drop_duplicates()
+  full_df.reset_index(drop=True, inplace=True)
+  full_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.raw.csv")
 
-  for column in X_FEATURE_COLUMNS:
-    no_data_error_df = no_data_error_df[no_data_error_df[column] != -9999]
-
-  no_data_error_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.csv")
-
-  profile_name = f"{dataset['name']}.analysis".lower()
-  profile = ProfileReport(no_data_error_df, title=profile_name, explorative=True)
+  profile_name = f"{dataset['name']}.raw.analysis".lower()
+  profile = ProfileReport(full_df, title=profile_name, explorative=True)
   profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
-  return no_data_error_df
+
+  no_duplicate_df = full_df.drop_duplicates()
+
+  no_duplicate_df = no_duplicate_df[[*X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS]]
+
+  outlier_mask = (np.abs(stats.zscore(no_duplicate_df)) < OUTLIER_ZSCORE_THRESHOLD).all(axis=1)
+
+  no_outlier_df = no_duplicate_df[outlier_mask]
+  outlier_df = no_duplicate_df[~outlier_mask]
+
+  outlier_df.reset_index(drop=True, inplace=True)
+  outlier_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.outlier.csv")
+
+  processed_df = no_outlier_df.transform('log2')
+
+  processed_df.reset_index(drop=True, inplace=True)
+  processed_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.processed.csv")
+
+  profile_name = f"{dataset['name']}.processed.analysis".lower()
+  profile = ProfileReport(processed_df, title=profile_name, explorative=True)
+  profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
+
+  return processed_df
 
 def split_feature_target(dataset_df):
   X = dataset_df[X_FEATURE_COLUMNS]
@@ -318,7 +343,7 @@ BASE_HTML = """
 </head>
 <body>
   <style>
-    .dataTables_wrapper { 
+    .dataTables_wrapper {
       padding: 4px;
       border: 1px solid black;
     }
@@ -342,7 +367,7 @@ BASE_HTML = """
 def grid_search_cv_to_html(results, dataset, model, strategy):
   results_df = pd.DataFrame(results)
   results_name = f"{dataset['name']}_{model['name']}_{strategy}".lower()
-  results_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{results_name}.csv")
+  results_df.to_csv(f"{DATASETS_FOLDER}/{results_name}.csv")
 
   results_df_html = results_df.to_html()
   html_string = BASE_HTML.replace('TABLE_HERE', results_df_html)
@@ -355,11 +380,21 @@ def log(info):
     print(info)
     log_file.write(f"{info}\n")
 
+RESULTS_DATASET_PATH = f"{DATASETS_FOLDER}/results.csv"
+def write_result_dataset(row):
+    if os.path.isfile(RESULTS_DATASET_PATH):
+      with open(RESULTS_DATASET_PATH, 'a') as results_dataset_file:
+        results_dataset_file.write(f"{row}\n")
+    else:
+      with open(RESULTS_DATASET_PATH, 'a') as results_dataset_file:
+        results_dataset_file.write("dataset,model,strategy,mse\n")
+        results_dataset_file.write(f"{row}\n")
+
 """## Modelos"""
 
 def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
   grid_search_cv_name =  'multi_output_grid_search_cv'
-  
+
   if model['support_multiple_output']:
     grid_search_cv_name = 'grid_search_cv'
 
@@ -376,7 +411,8 @@ def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
     'many_feature_many_target',
   )
 
-  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> *_err): {mse:.9f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> *_err): {mse:.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_many_target,{mse:.15f}")
 
 def many_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
   mses = []
@@ -398,8 +434,9 @@ def many_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
       f"many_feature_one_target_{target_column}",
     )
 
-    log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> {target_column}): {mse:.9f}")
-  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> ?_err): {mean(mses):.9f}")
+    log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> {target_column}): {mse:.15f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> ?_err): {mean(mses):.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_one_target_,{mean(mses):.15f}")
 
 def one_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
   mses = []
@@ -424,8 +461,9 @@ def one_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
       f"one_feature_one_target_{feature_column}_{target_column}",
     )
 
-    log(f"MSE ({dataset['name']}) ({model['name']}) ({feature_column} --> {target_column}): {mse:.9f}")
-  log(f"MSE ({dataset['name']}) ({model['name']}) (?_mag --> ?_err): {mean(mses):.9f}")
+    log(f"MSE ({dataset['name']}) ({model['name']}) ({feature_column} --> {target_column}): {mse:.15f}")
+  log(f"MSE ({dataset['name']}) ({model['name']}) (?_mag --> ?_err): {mean(mses):.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},one_feature_one_target,{mean(mses):.15f}")
 
 """# Experimentos"""
 
