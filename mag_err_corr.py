@@ -90,9 +90,9 @@ for folder in FOLDERS:
 
 TEDDY_DATASETS_URL = [
   'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_A.cat',
-  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_B.cat',
-  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_C.cat',
-  # 'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_D.cat',
+  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_B.cat',
+  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_C.cat',
+  'https://raw.githubusercontent.com/COINtoolbox/photoz_catalogues/master/Teddy/forTemplateBased/teddyT_D.cat',
 ]
 
 HAPPY_DATASETS_URL = [
@@ -113,18 +113,18 @@ DATASETS = [
     'header': 'infer',
     'index_col': False,
   },
-  # {
-  #   'name': 'happy',
-  #   'urls': HAPPY_DATASETS_URL,
-  #   'header': 'infer',
-  #   'index_col': False,
-  # },
-  # {
-  #   'name': 'sdss',
-  #   'urls': SDSS_DATASETS_URL,
-  #   'header': 0,
-  #   'index_col': False,
-  # },
+  {
+    'name': 'happy',
+    'urls': HAPPY_DATASETS_URL,
+    'header': 'infer',
+    'index_col': False,
+  },
+  {
+    'name': 'sdss',
+    'urls': SDSS_DATASETS_URL,
+    'header': 0,
+    'index_col': False,
+  },
 ]
 
 """## Modelos"""
@@ -272,6 +272,7 @@ def load_dataset_urls(dataset):
 
   no_data_error_df = full_df.drop_duplicates()
   no_data_error_df = no_data_error_df[[*X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS]]
+  no_data_error_df.reset_index(drop=True, inplace=True)
 
   no_data_error_df[(np.abs(stats.zscore(no_data_error_df)) < 3).all(axis=1)]
 
