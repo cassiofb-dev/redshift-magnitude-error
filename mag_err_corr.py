@@ -65,15 +65,15 @@ from xgboost import XGBRegressor
 
 from pandas_profiling import ProfileReport
 
-"""## Estrutura de Pastas"""
+"""# Estrutura de Pastas"""
 
-CREATED_DATASETS_FOLDER = 'created_datasets'
+DOWNLOADS_FOLDER = 'downloads'
 DATASETS_FOLDER = 'datasets'
 PROFILES_FOLDER = 'profiles'
 RESULTS_FOLDER = 'results'
 
 FOLDERS = [
-  CREATED_DATASETS_FOLDER,
+  DOWNLOADS_FOLDER,
   DATASETS_FOLDER,
   PROFILES_FOLDER,
   RESULTS_FOLDER,
@@ -87,6 +87,7 @@ for folder in FOLDERS:
 
 ## Bancos de Dados
 """
+
 OUTLIER_ZSCORE_THRESHOLD = 3
 
 TEDDY_DATASETS_URL = [
@@ -244,13 +245,13 @@ MODELS = [
 """
 
 def load_dataset(dataset_url, dataset_name, header, index_col):
-  dataset_path = f"{DATASETS_FOLDER}/{dataset_name}.csv"
+  dataset_download_path = f"{DOWNLOADS_FOLDER}/{dataset_name}.csv"
 
-  if os.path.isfile(dataset_path) == False:
-    request.urlretrieve(dataset_url, dataset_path)
+  if os.path.isfile(dataset_download_path) == False:
+    request.urlretrieve(dataset_url, dataset_download_path)
 
   dataset_df = pd.read_csv(
-      dataset_path,
+      dataset_download_path,
       comment = '#',
       names   = ['ID', *X_FEATURE_COLUMNS, *Y_TARGET_COLUMNS],
       sep     = '\s+|,',
@@ -272,7 +273,7 @@ def load_dataset_urls(dataset):
   ])
 
   full_df.reset_index(drop=True, inplace=True)
-  full_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.raw.csv")
+  full_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.raw.csv")
 
   profile_name = f"{dataset['name']}.raw.analysis".lower()
   profile = ProfileReport(full_df, title=profile_name, explorative=True)
@@ -288,17 +289,18 @@ def load_dataset_urls(dataset):
   outlier_df = no_duplicate_df[~outlier_mask]
 
   outlier_df.reset_index(drop=True, inplace=True)
-  outlier_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.outlier.csv")
+  outlier_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.outlier.csv")
 
   processed_df = no_outlier_df.transform('log2')
 
   processed_df.reset_index(drop=True, inplace=True)
-  processed_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{dataset['name']}.processed.csv")
+  processed_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.processed.csv")
 
   profile_name = f"{dataset['name']}.processed.analysis".lower()
   profile = ProfileReport(processed_df, title=profile_name, explorative=True)
   profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
-  return no_outlier_df
+
+  return processed_df
 
 def split_feature_target(dataset_df):
   X = dataset_df[X_FEATURE_COLUMNS]
@@ -365,7 +367,7 @@ BASE_HTML = """
 def grid_search_cv_to_html(results, dataset, model, strategy):
   results_df = pd.DataFrame(results)
   results_name = f"{dataset['name']}_{model['name']}_{strategy}".lower()
-  results_df.to_csv(f"{CREATED_DATASETS_FOLDER}/{results_name}.csv")
+  results_df.to_csv(f"{DATASETS_FOLDER}/{results_name}.csv")
 
   results_df_html = results_df.to_html()
   html_string = BASE_HTML.replace('TABLE_HERE', results_df_html)
@@ -378,7 +380,7 @@ def log(info):
     print(info)
     log_file.write(f"{info}\n")
 
-RESULTS_DATASET_PATH = f"{CREATED_DATASETS_FOLDER}/results.csv"
+RESULTS_DATASET_PATH = f"{DATASETS_FOLDER}/results.csv"
 def write_result_dataset(row):
     if os.path.isfile(RESULTS_DATASET_PATH):
       with open(RESULTS_DATASET_PATH, 'a') as results_dataset_file:
