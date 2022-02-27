@@ -44,12 +44,12 @@
     }
 
     .navbar {
-      height: 7vh;
-      line-height: 7vh;
-      font-size: 16px;
+      height: 32px;
+      line-height: 32px;
       display: flex;
       justify-content: space-between;
       border-bottom: 1px solid var(--text-color);
+      overflow-x: auto;
     }
 
     #theme {
@@ -59,8 +59,11 @@
     .nav-list {
       padding: 0;
       margin: 0;
-      min-width: 70%;
       list-style: none;
+    }
+
+    .nav-link {
+      margin-left: 16px;
     }
 
     .nav-link:hover {
@@ -132,7 +135,7 @@
   <div class="page">
     <header>
       <nav class="navbar">
-        <div id="theme" class="nav-link">Dark</div>
+        <div id="theme">Dark</div>
         <ul class="nav-list flex">
           <li class="nav-link"><a href="#home">Top</a></li>
           <li class="nav-link"><a href="#about">About</a></li>
