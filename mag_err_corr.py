@@ -25,6 +25,7 @@ PACKAGES = [
   'numpy',
   'scipy',
   'pandas',
+  'seaborn',
   'xgboost',
   'scikit-learn',
   'https://github.com/pandas-profiling/pandas-profiling/archive/master.zip',
@@ -45,6 +46,8 @@ from urllib import request
 from statistics import mean
 
 from time import perf_counter
+
+import seaborn as sns
 
 from scipy import stats
 
@@ -71,12 +74,14 @@ DOWNLOADS_FOLDER = 'downloads'
 DATASETS_FOLDER = 'datasets'
 PROFILES_FOLDER = 'profiles'
 RESULTS_FOLDER = 'results'
+IMAGES_FOLDER = 'images'
 
 FOLDERS = [
   DOWNLOADS_FOLDER,
   DATASETS_FOLDER,
   PROFILES_FOLDER,
   RESULTS_FOLDER,
+  IMAGES_FOLDER,
 ]
 
 for folder in FOLDERS:
@@ -275,6 +280,9 @@ def load_dataset_urls(dataset):
   full_df.reset_index(drop=True, inplace=True)
   full_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.raw.csv")
 
+  sns.pairplot(full_df[[*X_FEATURE_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.bands.raw.png")
+  sns.pairplot(full_df[[*Y_TARGET_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.errors.raw.png")
+
   profile_name = f"{dataset['name']}.raw.analysis".lower()
   profile = ProfileReport(full_df, title=profile_name, explorative=True)
   profile.to_file(f"{PROFILES_FOLDER}/{profile_name}.html")
@@ -295,6 +303,9 @@ def load_dataset_urls(dataset):
 
   processed_df.reset_index(drop=True, inplace=True)
   processed_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.processed.csv")
+
+  sns.pairplot(processed_df[[*X_FEATURE_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.bands.processed.png")
+  sns.pairplot(processed_df[[*Y_TARGET_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.errors.processed.png")
 
   profile_name = f"{dataset['name']}.processed.analysis".lower()
   profile = ProfileReport(processed_df, title=profile_name, explorative=True)
@@ -336,14 +347,14 @@ BASE_HTML = """
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>DataFrame DataTable</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
   <style>
-    .dataTables_wrapper {
+    .dataTables_wrapper { 
       padding: 4px;
       border: 1px solid black;
     }
@@ -394,7 +405,7 @@ def write_result_dataset(row):
 
 def many_feature_many_target(dataset, model, X_train, X_test, y_train, y_test):
   grid_search_cv_name =  'multi_output_grid_search_cv'
-
+  
   if model['support_multiple_output']:
     grid_search_cv_name = 'grid_search_cv'
 
