@@ -409,12 +409,12 @@ BASE_HTML = """
 """
 
 def grid_search_cv_to_html(results, dataset, model, strategy):
-  results_df = pd.DataFrame(results)
+  grid_search_results_df = pd.DataFrame(results)
   results_name = f"{dataset['name']}_{model['name']}_{strategy}".lower()
-  results_df.to_csv(f"{DATASETS_FOLDER}/{results_name}.csv")
+  grid_search_results_df.to_csv(f"{DATASETS_FOLDER}/{results_name}.csv")
 
-  results_df_html = results_df.to_html()
-  html_string = BASE_HTML.replace('TABLE_HERE', results_df_html)
+  grid_search_results_df_html = grid_search_results_df.to_html()
+  html_string = BASE_HTML.replace('TABLE_HERE', grid_search_results_df_html)
   html_file = open(f"{RESULTS_FOLDER}/{results_name}.html", 'w')
   html_file.write(html_string)
   html_file.close()
@@ -480,7 +480,7 @@ def many_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
 
     log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> {target_column}): {mse:.15f}")
   log(f"MSE ({dataset['name']}) ({model['name']}) (*_mag --> ?_err): {mean(mses):.15f}")
-  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_one_target_,{mean(mses):.15f}")
+  write_result_dataset(f"{dataset['name']},{model['name']},many_feature_one_target,{mean(mses):.15f}")
 
 def one_feature_one_target(dataset, model, X_train, X_test, y_train, y_test):
   mses = []
@@ -524,3 +524,14 @@ for dataset in DATASETS:
 time_end = perf_counter()
 
 log(f"Elapsed time: {time_end - time_start}s")
+
+"""# Resultados"""
+
+results_df = pd.read_csv("datasets/results.csv")
+results_df.to_latex("results/results.tex")
+
+results_df_html = results_df.to_html()
+html_string = BASE_HTML.replace('TABLE_HERE', results_df_html)
+html_file = open("results/results.html", 'w')
+html_file.write(html_string)
+html_file.close()
