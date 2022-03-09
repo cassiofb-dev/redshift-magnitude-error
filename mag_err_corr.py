@@ -68,6 +68,9 @@ from xgboost import XGBRegressor
 
 from pandas_profiling import ProfileReport
 
+sns.set_theme()
+sns.set_theme(font_scale=2)
+
 """# Estrutura de Pastas"""
 
 DOWNLOADS_FOLDER = 'downloads'
@@ -280,8 +283,23 @@ def load_dataset_urls(dataset):
   full_df.reset_index(drop=True, inplace=True)
   full_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.raw.csv")
 
-  sns.pairplot(full_df[[*X_FEATURE_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.bands.raw.png")
-  sns.pairplot(full_df[[*Y_TARGET_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.errors.raw.png")
+  sns.pairplot(
+    full_df,
+    x_vars=X_FEATURE_COLUMNS,
+    y_vars=X_FEATURE_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_bands_vs_bands.raw.png")
+
+  sns.pairplot(
+    full_df,
+    x_vars=Y_TARGET_COLUMNS,
+    y_vars=Y_TARGET_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_errors_vs_errors.raw.png")
+
+  sns.pairplot(
+    full_df,
+    x_vars=X_FEATURE_COLUMNS,
+    y_vars=Y_TARGET_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_bands_vs_errors.raw.png")
 
   profile_name = f"{dataset['name']}.raw.analysis".lower()
   profile = ProfileReport(full_df, title=profile_name, explorative=True)
@@ -304,8 +322,23 @@ def load_dataset_urls(dataset):
   processed_df.reset_index(drop=True, inplace=True)
   processed_df.to_csv(f"{DATASETS_FOLDER}/{dataset['name']}.processed.csv")
 
-  sns.pairplot(processed_df[[*X_FEATURE_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.bands.processed.png")
-  sns.pairplot(processed_df[[*Y_TARGET_COLUMNS]]).savefig(f"{IMAGES_FOLDER}/{dataset['name']}.errors.processed.png")
+  sns.pairplot(
+    processed_df,
+    x_vars=X_FEATURE_COLUMNS,
+    y_vars=X_FEATURE_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_bands_vs_bands.processed.png")
+
+  sns.pairplot(
+    processed_df,
+    x_vars=Y_TARGET_COLUMNS,
+    y_vars=Y_TARGET_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_errors_vs_errors.processed.png")
+
+  sns.pairplot(
+    processed_df,
+    x_vars=X_FEATURE_COLUMNS,
+    y_vars=Y_TARGET_COLUMNS,
+  ).savefig(f"{IMAGES_FOLDER}/{dataset['name']}_bands_vs_errors.processed.png")
 
   profile_name = f"{dataset['name']}.processed.analysis".lower()
   profile = ProfileReport(processed_df, title=profile_name, explorative=True)
